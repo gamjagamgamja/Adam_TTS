@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>애덤 TTS 발음 변환기 PRO+</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 700px; margin: auto; padding: 20px; line-height: 1.5; }
+  textarea, select, button { width: 100%; margin: 10px 0; padding: 10px; font-size: 1.1em; }
+  button { cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 5px; }
+  button:hover { background: #45a049; }
+  .output { background: #f5f5f5; padding: 10px; border-radius: 5px; min-height: 50px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h2>애덤 TTS 발음 변환기 PRO+</h2>
+<textarea id="koreanInput" rows="4" placeholder="한국어 문장을 입력하세요"></textarea>
+
+<label>단어 간 간격 (속도 조절):</label>
+<select id="spaceSize">
+  <option value=" ">보통</option>
+  <option value="  ">느리게</option>
+  <option value="   ">아주 느리게</option>
+</select>
+
+<label>발음 디테일:</label>
+<select id="detailLevel">
+  <option value="basic">기본</option>
+  <option value="detail">받침 강조</option>
+  <option value="smooth">부드럽게</option>
+</select>
+
+<button onclick="convertToAdam()">변환하기</button>
+
+<h3>애덤 발음 결과:</h3>
+<div class="output" id="adamOutput"></div>
+
+<script>
+// 초성, 중성, 종성 매핑 (애덤 발음용)
+const CHO = ["g","kk","n","d","tt","r","m","b","pp","s","ss","ng","j","jj","ch","k","t","p","h"];
+const JUNG = ["a","ae","ya","yae","eo","e","yeo","ye","o","wa","wae","oe","yo","u","weo","we","wi","yu","eu","ui","i"];
+const JONG = ["","k","k","ks","n","nj","nh","t","l","lk","lm","lb","ls","lt","lp","lh","m","p","ps","t","t","ng","t","t","k","t","p","t"];
+
+function hangulToAdam(text, space, mode) {
+    let result = "";
+    for (let char of text) {
+        if (char.match(/[가-힣]/)) {
+            let code = char.charCodeAt(0) - 0xAC00;
+            let cho = Math.floor(code / 588);
+            let jung = Math.floor((code % 588) / 28);
+            let jong = code % 28;
+
+            let part = CHO[cho] + "-" + JUNG[jung] + (JONG[jong] ? "-" + JONG[jong] : "");
+
+            // 모드별 발음 최적화
+            if (mode === "detail" && JONG[jong]) {
+                part = CHO[cho] + "-" + JUNG[jung] + "-" + JONG[jong]; // 받침 강하게
+            } else if (mode === "smooth") {
+                part = CHO[cho] + JUNG[jung] + (JONG[jong] ? JONG[jong] : ""); // 하이픈 최소화
+            }
+
+            result += part + space;
+        } else if (char === " ") {
+            result += "   "; // 문장 간 띄어쓰기
+        } else {
+            result += char;
+        }
+    }
+    return result.trim();
+}
+
+function convertToAdam() {
+    let text = document.getElementById("koreanInput").value;
+    let space = document.getElementById("spaceSize").value;
+    let mode = document.getElementById("detailLevel").value;
+
+    let converted = hangulToAdam(text, space, mode);
+    document.getElementById("adamOutput").textContent = converted;
+}
+</script>
+</body>
+</html>
